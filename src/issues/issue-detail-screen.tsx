@@ -24,6 +24,7 @@ import {
   WatchToggle,
 } from '@/issues/detail/sections';
 import { labelFor, useIssueProperties } from '@/issues/use-issue-properties';
+import { AttachmentsSection } from '@/attachments/attachments-section';
 import { CommentsSection, mentionablesFrom, openIssueByIdentifier } from '@/comments/comments-section';
 import { MarkdownBody } from '@/markdown/markdown';
 import { MarkdownEditor } from '@/markdown/markdown-editor';
@@ -311,6 +312,8 @@ export function IssueDetailScreen() {
         <SubIssuesSection issue={issue} />
         <LinksSection issue={issue} />
         <DevelopmentSection issue={issue} />
+
+        <AttachmentsSection issue={issue} />
 
         <CommentsSection
           issue={issue}
