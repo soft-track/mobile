@@ -11,6 +11,7 @@ import { hydrateInstanceUrl } from '@/api/instance';
 import { queryClient } from '@/api/query-client';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
 import { hydrateSession } from '@/auth/session';
+import { useDeepLinkCapture } from '@/auth/use-deep-link-capture';
 import { AppText, Button, Loading } from '@/ui/primitives';
 import {
   hydrateTheme,
@@ -36,6 +37,8 @@ type Hydrated = { theme: ThemePreference };
 function RootNavigator() {
   const { status } = useAuth();
   const { t } = useTheme();
+
+  useDeepLinkCapture(status === 'signedOut');
 
   // The splash is still up while /auth/me decides, so render nothing rather
   // than a half-built shell.

@@ -1,15 +1,22 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 
-import { errorDetail } from '@/api/errors';
-import { getInstanceUrl, normalizeInstanceUrl, probeInstance } from '@/api/instance';
+import { errorDetail, formatDuration, retryAfterSeconds } from '@/api/errors';
+import {
+  getInstanceUrl,
+  instanceLabel,
+  normalizeInstanceUrl,
+  probeInstance,
+  type InstanceConfig,
+} from '@/api/instance';
 import { useAuth } from '@/auth/auth-context';
+import { DEMO_EMAIL, DEMO_PASSWORD } from '@/auth/demo';
+import { takeDestination } from '@/auth/pending-destination';
+import { useDebouncedValue } from '@/ui/use-debounced-value';
+import { href } from '@/ui/href';
 import { useIsMultiPane } from '@/ui/layout';
 import { Alert, AppText, Button, Card, Field, Logo } from '@/ui/primitives';
 import { useTokens } from '@/ui/theme';
@@ -26,20 +33,58 @@ import { useTokens } from '@/ui/theme';
  * State is plain `useState` with a local error/submitting pair, matching
  * `frontend/src/auth/LoginPage.tsx` -- the web uses no form library and neither
  * does this.
- *
- * Issue #2 owns the rest: demo-credential prefill, 429 + Retry-After handling,
- * richer link validation, and continuing to a deep link after signing in.
  */
+
+/** How long to wait after typing stops before probing the entered link. */
+const PROBE_DEBOUNCE_MS = 600;
+
 export function LoginScreen() {
   const t = useTokens();
   const { signIn } = useAuth();
   const multiPane = useIsMultiPane();
 
   const [server, setServer] = useState(getInstanceUrl() ?? '');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  /**
+   * The instance's own `/auth/config`.
+   *
+   * The web reads this at load, because its instance is fixed at build time.
+   * Here there is no instance until someone types one, so it is fetched as the
+   * link settles -- and everything it drives (the demo prefill, whether sign-up
+   * is offered) stays absent until then, which is the right default anyway.
+   */
+  const normalized = normalizeInstanceUrl(server);
+  // Settle before probing, so a probe is not fired at every keystroke.
+  const settled = useDebouncedValue(normalized, PROBE_DEBOUNCE_MS);
+
+  const probe = useQuery({
+    queryKey: ['instance-config', settled],
+    queryFn: () => probeInstance(settled!),
+    enabled: Boolean(settled),
+    // The instance has to answer for itself; a stale config from the last
+    // server someone typed would mean the wrong sign-up affordance.
+    staleTime: 30_000,
+    retry: false,
+  });
+
+  const config: InstanceConfig | null =
+    settled === normalized && probe.data?.ok ? probe.data.config : null;
+  const probing = Boolean(settled) && (probe.isFetching || settled !== normalized);
+
+  /**
+   * `null` means nobody has touched the field yet, which is not the same as
+   * having emptied it. The prefill cannot be initial state -- it depends on a
+   * response that has not arrived at first render -- and deriving it rather than
+   * writing it back in an effect keeps that race harmless: whatever was typed
+   * while the probe was in flight simply wins, and clearing the field does not
+   * snap the demo address back. Same reasoning as `LoginPage.tsx:31-42`.
+   */
+  const [typedEmail, setTypedEmail] = useState<string | null>(null);
+  const demo = config?.demo_credentials === true;
+  const email = typedEmail ?? (demo ? DEMO_EMAIL : '');
 
   async function submit() {
     setError(null);
@@ -53,18 +98,33 @@ export function LoginScreen() {
     setSubmitting(true);
     try {
       // Probe before posting credentials, so a typo reports "cannot reach this
-      // server" rather than an opaque network failure mid-sign-in.
-      const probe = await probeInstance(instance);
-      if (!probe.ok) {
-        setError(probe.message);
+      // server" rather than an opaque network failure mid-sign-in. Skipped when
+      // the debounced probe has already answered for this link.
+      if (!config) {
+        const probe = await probeInstance(instance);
+        if (!probe.ok) {
+          setError(probe.message);
+          return;
+        }
+      }
+
+      await signIn(instance, email.trim(), password);
+
+      // Replay whatever deep link the auth gate interrupted.
+      const destination = takeDestination();
+      if (destination) router.replace(href(destination));
+    } catch (err) {
+      const wait = retryAfterSeconds(err);
+      if (wait !== null) {
+        // Throttled, not wrong. Saying "incorrect password" here would send
+        // someone straight into a longer backoff.
+        setError(`Too many sign-in attempts. Try again in ${formatDuration(wait)}.`);
         return;
       }
-      await signIn(instance, email.trim(), password);
-    } catch (err) {
-      // Show the API's own message. Sign-in is rate limited, and a canned
-      // "wrong password" would send a throttled user round the loop again --
-      // the same reasoning as `LoginPage.tsx:51-56`.
-      setError(errorDetail(err, 'Could not sign in. Please try again.'));
+      // Otherwise show what the API said rather than always blaming the
+      // password: the 401 text is identical for a wrong password and an unknown
+      // address, so showing it leaks nothing.
+      setError(errorDetail(err, 'Incorrect email or password.'));
     } finally {
       setSubmitting(false);
     }
@@ -98,11 +158,18 @@ export function LoginScreen() {
           autoCorrect={false}
           textContentType="URL"
           returnKeyType="next"
+          hint={
+            probing
+              ? 'Checking this instance…'
+              : config
+                ? `Connected to ${normalized ? instanceLabel(normalized) : ''}`
+                : undefined
+          }
         />
         <Field
           label="Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={setTypedEmail}
           placeholder="you@company.com"
           keyboardType="email-address"
           autoCapitalize="none"
@@ -122,6 +189,28 @@ export function LoginScreen() {
           returnKeyType="go"
           onSubmitEditing={submit}
         />
+
+        {/* Only the instance that is actually seeded with the demo account
+            advertises it, so this appears nowhere else. */}
+        {demo ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Use the demo account"
+            onPress={() => {
+              setTypedEmail(DEMO_EMAIL);
+              setPassword(DEMO_PASSWORD);
+            }}
+            style={{
+              backgroundColor: t.line.well,
+              borderRadius: t.radius.control,
+              padding: 10,
+            }}
+          >
+            <AppText variant="hint">
+              This instance has a demo account. Tap to fill it in.
+            </AppText>
+          </Pressable>
+        ) : null}
 
         <Button onPress={submit} loading={submitting}>
           Sign in
