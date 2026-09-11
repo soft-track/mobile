@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -100,6 +100,7 @@ function Unreachable() {
 
 function Themed({ children }: { children: React.ReactNode }) {
   const { theme, t } = useTheme();
+  const splashHidden = useRef(false);
 
   // Paint the window itself, not just the React tree. Without this the native
   // background shows through during screen transitions as a white flash in dark
@@ -112,7 +113,10 @@ function Themed({ children }: { children: React.ReactNode }) {
     <View
       style={{ flex: 1, backgroundColor: t.canvas }}
       onLayout={() => {
-        // The first themed frame is committed; it is safe to drop the splash.
+        // onLayout fires on every resize -- a rotation, a fold -- so only the
+        // first one means "the first themed frame is committed".
+        if (splashHidden.current) return;
+        splashHidden.current = true;
         void SplashScreen.hideAsync();
       }}
     >
