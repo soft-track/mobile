@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -163,17 +164,21 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider initialPreference={hydrated.theme}>
-      <SafeAreaProvider>
-        <Themed>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <TeamProvider initialTeamKey={hydrated.teamKey}>
-                <Gate />
-              </TeamProvider>
-            </AuthProvider>
-          </QueryClientProvider>
-        </Themed>
-      </SafeAreaProvider>
+      {/* Required by react-native-gesture-handler, which the board's
+          long-press-to-lift drag is built on. */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <Themed>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <TeamProvider initialTeamKey={hydrated.teamKey}>
+                  <Gate />
+                </TeamProvider>
+              </AuthProvider>
+            </QueryClientProvider>
+          </Themed>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }

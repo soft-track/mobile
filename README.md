@@ -37,6 +37,8 @@ src/app/            expo-router routes — thin wrappers, no logic
 src/api/            HTTP client, instance URL, generated client
 src/auth/           session store, auth context, deep-link capture
 src/team/           team context, switcher, creation, invitations
+src/board/          board and list views, filters, drag-to-move
+src/issues/         priority and status metadata
 src/ui/             design tokens, theme, primitives, navigation chrome
 openapi/            the vendored API contract codegen reads
 ```
@@ -72,6 +74,11 @@ the real client modules against it, and the onboarding one writes real rows
 SOFTTRACK_LIVE_URL=http://localhost:8000 npm test
 ```
 
+Registration is throttled per IP and charged even on success, so running the
+onboarding suite repeatedly will eventually 429. The counter lives in the API
+process, so `docker compose restart backend` clears it without touching the
+database.
+
 Note `experiments.typedRoutes` is a dev-time aid: the route union is written by
 `expo start`, not by `expo export`, so outside the dev server every path
 typechecks permissively. Paths built at runtime go through `href()` in
@@ -90,14 +97,18 @@ The mockups reuse the web app's design tokens (brand `#6342db`, tinted neutrals,
 ## Status
 
 Onboarding works end to end: sign in to any instance, register, accept an
-invitation, and create, switch between and list teams. Board, Search and Inbox
-are placeholders pointing at their issues.
+invitation, create and switch teams, and work a team's board -- columns from the
+team's own statuses, six server-side filters held in the URL, board and list
+views, and drag or tap to move a card. Search and Inbox are placeholders
+pointing at their issues.
 
 Known gaps, tracked rather than hidden:
 
-- **Nothing has been seen on a device yet.** The suites cover the logic and the
-  mockup geometry, but no one has run this on hardware — and the medium and
-  expanded layouts would need a tablet or an Android emulator to check for real.
+- **Nothing has been seen on a device yet.** The suites cover the logic, the
+  mockup geometry and that the trees render, but no one has run this on
+  hardware. The drag gesture in particular is unverified by touch, which is why
+  every move is also reachable by tapping a card. The medium and expanded
+  layouts would need a tablet or an Android emulator to check for real.
 - **Invitation links cannot be true universal links.** A `https://your-instance/invite/…`
   link can only open the app if that exact domain is declared in the build, which
   is impossible for arbitrary self-hosted hosts. `softtrack://invite/<token>`
