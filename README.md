@@ -39,6 +39,7 @@ src/auth/           session store, auth context, deep-link capture
 src/team/           team context, switcher, creation, invitations
 src/board/          board and list views, filters, drag-to-move
 src/issues/         priority and status metadata
+src/offline/        connectivity, cache persistence, the mutation queue
 src/ui/             design tokens, theme, primitives, navigation chrome
 openapi/            the vendored API contract codegen reads
 ```
@@ -97,11 +98,12 @@ The mockups reuse the web app's design tokens (brand `#6342db`, tinted neutrals,
 
 ## Status
 
-Onboarding works end to end: sign in to any instance, register, accept an
-invitation, create and switch teams, and work a team's board -- columns from the
-team's own statuses, six server-side filters held in the URL, board and list
-views, and drag or tap to move a card. Search and Inbox are placeholders
-pointing at their issues.
+Every tracked issue is implemented except push notifications, which have no
+backend to talk to. Sign in to any instance, register, accept invitations,
+manage teams, work a board, create and edit issues with sub-issues and links,
+comment in GitHub-flavored markdown, attach photos and files, search, run cycles,
+read the four reports, save views, administer a team or the whole instance, and
+keep working with no connection.
 
 Known gaps, tracked rather than hidden:
 
@@ -125,6 +127,9 @@ Known gaps, tracked rather than hidden:
 - **Member counts cost one request per team.** `TeamRead` carries no count, so
   the teams list asks each team for its members. A `member_count` field upstream
   would remove the fan-out and help the web too.
+- **Offline is verified as logic, not as behaviour.** The queue, the conflict
+  rule and the cache are covered by tests, but nobody has watched a phone lose
+  signal, move a card and come back. That needs a device.
 - **No aurora or glass blur yet.** The web's translucent panels are approximated
   with opaque surfaces; `backdrop-filter` has no React Native equivalent and
   per-surface blur is expensive on Android.

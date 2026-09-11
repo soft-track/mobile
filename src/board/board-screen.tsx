@@ -13,6 +13,7 @@ import { KanbanBoard } from '@/board/kanban-board';
 import { useStatusChange } from '@/board/use-status-change';
 import { CycleBanner, CyclesSheet } from '@/cycles/cycles-screen';
 import { ReportsSheet } from '@/reports/reports-sheet';
+import { OfflineBanner, SyncQueueSheet } from '@/offline/sync-status';
 import { useListViewsTeamsTeamIdViewsGet } from '@/api/generated/endpoints/views/views';
 import { useAuth } from '@/auth/auth-context';
 import { fromViewFilters } from '@/views/saved-views';
@@ -58,6 +59,7 @@ export function BoardScreen() {
   const [viewsOpen, setViewsOpen] = useState(false);
   const [cyclesOpen, setCyclesOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [creating, setCreating] = useState(false);
   const [moving, setMoving] = useState<IssueRead | null>(null);
@@ -213,6 +215,8 @@ export function BoardScreen() {
         </Pressable>
       </View>
 
+      <OfflineBanner onOpenQueue={() => setSyncOpen(true)} />
+
       <CycleBanner team={team} onOpen={() => setCyclesOpen(true)} />
 
       <FilterChips chips={chips} onAdd={() => setFilterOpen(true)} />
@@ -234,6 +238,8 @@ export function BoardScreen() {
           onMovePress={setMoving}
         />
       )}
+
+      <SyncQueueSheet visible={syncOpen} onClose={() => setSyncOpen(false)} />
 
       <ReportsSheet
         visible={reportsOpen}

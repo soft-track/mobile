@@ -13,6 +13,10 @@ export const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      // Long enough that a persisted cache is still served after a restart --
+      // without it everything would be discarded as stale on the way in, which
+      // is exactly the case offline reading exists for.
+      gcTime: 7 * 24 * 60 * 60 * 1000,
     },
   },
 });

@@ -18,7 +18,7 @@ import type {
 import { errorDetail } from '@/api/errors';
 import { useTeamData } from '@/board/use-team-data';
 import { PRIORITY_LABEL } from '@/issues/issue-meta';
-import { Alert, AppText, Button, Card } from '@/ui/primitives';
+import { Alert, AppText, Card } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
