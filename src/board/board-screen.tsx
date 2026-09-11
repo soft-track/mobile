@@ -15,6 +15,7 @@ import { useTeamData } from '@/board/use-team-data';
 import { NewTeamSheet } from '@/team/new-team-sheet';
 import { useTeams } from '@/team/team-context';
 import { TeamSwitcher } from '@/team/team-switcher';
+import { href } from '@/ui/href';
 import { Icon } from '@/ui/icon';
 import { useIsMultiPane } from '@/ui/layout';
 import { AppText, Button, Loading, TeamBadge } from '@/ui/primitives';
@@ -155,10 +156,14 @@ export function BoardScreen() {
           issues={issues}
           estimates={data.estimates}
           onMove={onMove}
-          onCardPress={setMoving}
+          onCardPress={(issue) => router.push(href(`/issue/${issue.id}`))}
         />
       ) : (
-        <IssueList issues={issues} onMovePress={setMoving} />
+        <IssueList
+          issues={issues}
+          onPress={(issue) => router.push(href(`/issue/${issue.id}`))}
+          onMovePress={setMoving}
+        />
       )}
 
       <FilterSheet
@@ -220,6 +225,30 @@ export function BoardScreen() {
           ))}
         </View>
       </Sheet>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="New issue"
+        onPress={() => router.push('/new-issue')}
+        style={{
+          position: 'absolute',
+          right: 20,
+          bottom: 24,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.brand[600],
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 6,
+        }}
+      >
+        <Icon name="plus" size={24} color="#ffffff" />
+      </Pressable>
 
       <TeamSwitcher
         visible={switching}

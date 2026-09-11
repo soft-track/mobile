@@ -59,6 +59,10 @@ function RootNavigator() {
           structurally impossible. */}
       <Stack.Protected guard={status !== 'signedOut'}>
         <Stack.Screen name="(app)" />
+        {/* Pushed over the tabs rather than being tab destinations: both are
+            things you enter from somewhere and come back from. */}
+        <Stack.Screen name="issue/[id]" />
+        <Stack.Screen name="new-issue" options={{ presentation: 'modal' }} />
       </Stack.Protected>
       <Stack.Protected guard={status === 'signedOut'}>
         <Stack.Screen name="(auth)" />

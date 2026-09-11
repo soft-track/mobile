@@ -14,9 +14,11 @@ import { useTokens } from '@/ui/theme';
  */
 export function IssueList({
   issues,
+  onPress,
   onMovePress,
 }: {
   issues: IssueRead[];
+  onPress: (issue: IssueRead) => void;
   onMovePress: (issue: IssueRead) => void;
 }) {
   const t = useTokens();
@@ -35,6 +37,7 @@ export function IssueList({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${item.identifier} ${item.title}`}
+          onPress={() => onPress(item)}
           onLongPress={() => onMovePress(item)}
           style={{
             flexDirection: 'row',
