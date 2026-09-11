@@ -20,7 +20,9 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'check'
-  | 'logout';
+  | 'logout'
+  | 'trash'
+  | 'plus';
 
 export function Icon({
   name,
@@ -110,6 +112,15 @@ export function Icon({
       ) : null}
 
       {name === 'check' ? <Path d="m5 12.5 4.5 4.5L19 7.5" {...stroke} /> : null}
+
+      {name === 'plus' ? <Path d="M12 5v14M5 12h14" {...stroke} /> : null}
+
+      {name === 'trash' ? (
+        <Path
+          d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M10 11v5M14 11v5"
+          {...stroke}
+        />
+      ) : null}
 
       {name === 'logout' ? (
         <Path
