@@ -114,6 +114,13 @@ Known gaps, tracked rather than hidden:
   is impossible for arbitrary self-hosted hosts. `softtrack://invite/<token>`
   works, and falls back to asking you to sign in first, since a custom-scheme
   link carries no instance.
+- **Push notifications are not built, because the API has no way to register a
+  device.** Issue #10 anticipated this ("requires a backend addition for device
+  token registration + push delivery"). There is no `/devices` endpoint and
+  nothing APNs- or FCM-shaped anywhere in the schema, so the in-app inbox and
+  the unread badge are what ship; the badge polls once a minute while the app is
+  in front rather than pretending to be pushed. Real push also needs a dev build
+  and signing credentials, neither of which exists yet.
 - **Member counts cost one request per team.** `TeamRead` carries no count, so
   the teams list asks each team for its members. A `member_count` field upstream
   would remove the fan-out and help the web too.
