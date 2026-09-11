@@ -17,10 +17,10 @@ import {
   listIssuesTeamsTeamIdIssuesGet,
 } from '@/api/generated/endpoints/issues/issues';
 import { listStatusesTeamsTeamIdStatusesGet } from '@/api/generated/endpoints/statuses/statuses';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * Cycles against a real instance.
@@ -52,7 +52,7 @@ describeLive('cycles against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
   });
 
   afterAll(async () => {

@@ -10,6 +10,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:live": "jest --runInBand",
     "sync:openapi": "./scripts/sync-openapi.sh",
     "generate:api": "orval --config orval.config.ts"
   },

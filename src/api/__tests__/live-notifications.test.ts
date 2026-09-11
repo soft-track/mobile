@@ -21,10 +21,10 @@ import {
   acceptInviteInvitesTokenAcceptPost,
   createInviteTeamsTeamIdInvitesPost,
 } from '@/api/generated/endpoints/invites/invites';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * The inbox against a real instance.
@@ -56,7 +56,7 @@ describeLive('notifications against a live instance', () => {
     });
     demoToken = demo.access_token;
     await persistToken(demoToken);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
 
     const other = await registerAuthRegisterPost({
       email: OTHER_EMAIL,

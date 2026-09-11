@@ -13,10 +13,10 @@ import {
   createIssueTeamsTeamIdIssuesPost,
   deleteIssueIssuesIssueIdDelete,
 } from '@/api/generated/endpoints/issues/issues';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { AttachmentRead, TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken, getAccessToken } from '@/auth/session';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * Attachments against a real instance.
@@ -59,7 +59,7 @@ describeLive('attachments against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
     const issue = await createIssueTeamsTeamIdIssuesPost(team.id, {
       title: `Attachments ${RUN}`,
     });
