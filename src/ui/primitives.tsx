@@ -234,7 +234,7 @@ export function Button({
   );
 }
 
-export function Alert({ children, tone = 'danger' }: { children: string; tone?: 'danger' }) {
+export function Alert({ children }: { children: string }) {
   const t = useTokens();
   return (
     <View

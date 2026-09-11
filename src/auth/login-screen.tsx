@@ -157,9 +157,8 @@ export function LoginScreen() {
         style={{ flex: 1, flexDirection: 'row' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Laid out directly rather than through `Panes`: the welcome panel
-            appears from medium upward, whereas a `Panes` sidebar is expanded-only.
-            Login sits outside the app shell, so it owns its own split. */}
+        {/* Login sits outside the app shell, so it owns its own split: the
+            welcome panel appears from medium upward. */}
         {multiPane ? <View style={{ flex: 1 }}>{welcome}</View> : null}
         <ScrollView
           style={{ flex: 1 }}
