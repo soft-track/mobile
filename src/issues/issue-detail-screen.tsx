@@ -17,6 +17,12 @@ import {
   PropertyRow,
   SinglePicker,
 } from '@/issues/property-picker';
+import {
+  DevelopmentSection,
+  LinksSection,
+  SubIssuesSection,
+  WatchToggle,
+} from '@/issues/detail/sections';
 import { labelFor, useIssueProperties } from '@/issues/use-issue-properties';
 import { useTeams } from '@/team/team-context';
 import { Icon } from '@/ui/icon';
@@ -155,11 +161,7 @@ export function IssueDetailScreen() {
         <AppText variant="identifier" style={{ flex: 1, textAlign: 'center' }}>
           {issue.identifier}
         </AppText>
-        {saving ? (
-          <AppText variant="hint">Saving…</AppText>
-        ) : (
-          <View style={{ width: 44 }} />
-        )}
+        {saving ? <AppText variant="hint">Saving…</AppText> : <WatchToggle issue={issue} />}
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} keyboardShouldPersistTaps="handled">
@@ -263,15 +265,12 @@ export function IssueDetailScreen() {
           />
         </Card>
 
-        <Card style={{ padding: 14, gap: 6 }}>
-          <AppText variant="hint">
-            Opened by {issue.creator.full_name}
-          </AppText>
-          {issue.child_count > 0 ? (
-            <AppText variant="hint">
-              {issue.completed_child_count} of {issue.child_count} sub-issues done
-            </AppText>
-          ) : null}
+        <SubIssuesSection issue={issue} />
+        <LinksSection issue={issue} />
+        <DevelopmentSection issue={issue} />
+
+        <Card style={{ padding: 14 }}>
+          <AppText variant="hint">Opened by {issue.creator.full_name}</AppText>
         </Card>
 
         <Pressable
