@@ -22,7 +22,8 @@ export type IconName =
   | 'check'
   | 'logout'
   | 'trash'
-  | 'plus';
+  | 'plus'
+  | 'chart';
 
 export function Icon({
   name,
@@ -112,6 +113,10 @@ export function Icon({
       ) : null}
 
       {name === 'check' ? <Path d="m5 12.5 4.5 4.5L19 7.5" {...stroke} /> : null}
+
+      {name === 'chart' ? (
+        <Path d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...stroke} />
+      ) : null}
 
       {name === 'plus' ? <Path d="M12 5v14M5 12h14" {...stroke} /> : null}
 
