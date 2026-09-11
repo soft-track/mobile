@@ -6,10 +6,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
 import { hydrateInstanceUrl } from '@/api/instance';
 import { queryClient } from '@/api/query-client';
+import { startConnectivityWatch } from '@/offline/connectivity';
+import { MAX_AGE_MS, persister } from '@/offline/persistence';
+import { registerQueuedMutations } from '@/offline/queue';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
 import { hydrateSession } from '@/auth/session';
 import { useDeepLinkCapture } from '@/auth/use-deep-link-capture';
@@ -150,6 +153,13 @@ export default function RootLayout() {
   const [hydrated, setHydrated] = useState<Hydrated | null>(null);
 
   useEffect(() => {
+    // Mutation functions have to be registered by key before a persisted queue
+    // is restored, or a paused mutation comes back as data with nothing to run.
+    registerQueuedMutations(queryClient);
+    return startConnectivityWatch();
+  }, []);
+
+  useEffect(() => {
     // One pass over persisted state before anything renders: the stored theme,
     // the instance URL, and the token -- each into its module-level mirror so
     // the axios interceptor can read them synchronously from the first request.
@@ -173,13 +183,19 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <Themed>
-            <QueryClientProvider client={queryClient}>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={{ persister, maxAge: MAX_AGE_MS }}
+              // Anything queued while offline is replayed here, once the
+              // restored cache is back in place.
+              onSuccess={() => void queryClient.resumePausedMutations()}
+            >
               <AuthProvider>
                 <TeamProvider initialTeamKey={hydrated.teamKey}>
                   <Gate />
                 </TeamProvider>
               </AuthProvider>
-            </QueryClientProvider>
+            </PersistQueryClientProvider>
           </Themed>
         </SafeAreaProvider>
       </GestureHandlerRootView>

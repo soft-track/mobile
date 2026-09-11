@@ -8,8 +8,10 @@ import {
   rotateSecretRepositoriesRepositoryIdRotatePost,
   useListRepositoriesTeamsTeamIdRepositoriesGet,
 } from '@/api/generated/endpoints/integrations/integrations';
-import { updateTeamTeamsTeamIdPatch } from '@/api/generated/endpoints/teams/teams';
-import { useListTeamMembersTeamsTeamIdMembersGet } from '@/api/generated/endpoints/teams/teams';
+import {
+  updateTeamTeamsTeamIdPatch,
+  useListTeamMembersTeamsTeamIdMembersGet,
+} from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { errorDetail } from '@/api/errors';
 import { getInstanceUrl } from '@/api/instance';

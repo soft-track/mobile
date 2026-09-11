@@ -1,10 +1,8 @@
 import { useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  getListIssuesTeamsTeamIdIssuesGetQueryKey,
-  updateIssueIssuesIssueIdPatch,
-} from '@/api/generated/endpoints/issues/issues';
+import { getListIssuesTeamsTeamIdIssuesGetQueryKey } from '@/api/generated/endpoints/issues/issues';
+import { QUEUED, type MoveIssueVariables } from '@/offline/queue';
 import type {
   ListIssuesTeamsTeamIdIssuesGetParams,
   PageIssueRead,
@@ -22,12 +20,20 @@ import type {
  *
  * `params` has to match what the board is showing, because it is part of the
  * query key being patched.
+ *
+ * The write itself goes through a keyed mutation rather than a bare call, so
+ * React Query pauses it when there is no network and replays it on reconnect --
+ * a card moved on a train stays moved, and reaches the server when the train
+ * comes out of the tunnel.
  */
 export function useStatusChange(
   team: TeamRead | undefined,
   params: ListIssuesTeamsTeamIdIssuesGetParams,
 ) {
   const queryClient = useQueryClient();
+  const move = useMutation<unknown, Error, MoveIssueVariables>({
+    mutationKey: QUEUED.moveIssue,
+  });
 
   return useCallback(
     async (issueId: number, status: StatusRead): Promise<boolean> => {
@@ -47,8 +53,17 @@ export function useStatusChange(
           : old,
       );
 
+      const before = previous?.items.find((item) => item.id === issueId);
+
       try {
-        await updateIssueIssuesIssueIdPatch(issueId, { status_id: status.id });
+        await move.mutateAsync({
+          issueId,
+          status,
+          // Captured now so a replay can tell "nothing moved" from "somebody
+          // else moved it while we were away".
+          seenAt: before?.updated_at ?? '',
+          identifier: before?.identifier ?? `#${issueId}`,
+        });
         // Moving a card moves its points between columns, and may close out a
         // cycle's remaining work.
         void queryClient.invalidateQueries({ queryKey: [`/teams/${team.id}/estimates`] });
@@ -56,10 +71,12 @@ export function useStatusChange(
         void queryClient.invalidateQueries({ queryKey: [`/issues/${issueId}`] });
         return true;
       } catch {
+        // A paused mutation does not reject, so reaching here means it was
+        // genuinely refused -- put the card back where it was.
         queryClient.setQueryData(queryKey, previous);
         return false;
       }
     },
-    [queryClient, team, params],
+    [queryClient, team, params, move],
   );
 }

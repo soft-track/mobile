@@ -17,8 +17,10 @@ import {
   unreadCountNotificationsUnreadCountGet,
   updateNotificationNotificationsNotificationIdPatch,
 } from '@/api/generated/endpoints/notifications/notifications';
-import { createInviteTeamsTeamIdInvitesPost } from '@/api/generated/endpoints/invites/invites';
-import { acceptInviteInvitesTokenAcceptPost } from '@/api/generated/endpoints/invites/invites';
+import {
+  acceptInviteInvitesTokenAcceptPost,
+  createInviteTeamsTeamIdInvitesPost,
+} from '@/api/generated/endpoints/invites/invites';
 import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
