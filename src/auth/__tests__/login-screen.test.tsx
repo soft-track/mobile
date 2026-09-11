@@ -10,7 +10,13 @@ jest.mock('@/api/instance', () => {
   return { ...actual, probeInstance: jest.fn() };
 });
 
-const { probeInstance } = jest.requireMock('@/api/instance');
+const { probeInstance, setInstanceUrl } = jest.requireMock('@/api/instance');
+
+const CONFIG_OPEN = {
+  open_registration: true,
+  landing_page: true,
+  demo_credentials: true,
+};
 
 /** RNTL 14 renders through a concurrent root, so `render` and `fireEvent` are
  *  both async -- an un-awaited fireEvent silently does nothing. */
@@ -31,8 +37,9 @@ function renderLogin() {
   );
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   probeInstance.mockReset();
+  await setInstanceUrl(null);
 });
 
 describe('LoginScreen', () => {
@@ -88,4 +95,38 @@ describe('LoginScreen', () => {
     // A bare host is normalized to https:// before anything is probed.
     expect(probeInstance).toHaveBeenCalledWith('https://track.acme.dev');
   });
+});
+
+describe('LoginScreen, once the instance has answered', () => {
+  /**
+   * Pre-seeding the stored instance makes the field start populated, and
+   * `useDebouncedValue` starts settled on its initial value -- so the probe
+   * fires on mount with no timer to wait out.
+   */
+  async function renderConnected(config: Partial<typeof CONFIG_OPEN>) {
+    await setInstanceUrl('https://track.acme.dev');
+    probeInstance.mockResolvedValue({ ok: true, config: { ...CONFIG_OPEN, ...config } });
+    return renderLogin();
+  }
+
+  it('offers the demo account only where the instance advertises one', async () => {
+    const view = await renderConnected({ demo_credentials: true });
+
+    const hint = await view.findByLabelText('Use the demo account');
+    // Derived, not written back in an effect: the field shows the demo address
+    // as soon as the config says there is one.
+    expect(view.getByDisplayValue('demo@softtrack.dev')).toBeTruthy();
+
+    await fireEvent.press(hint);
+    expect(view.getByDisplayValue('password123')).toBeTruthy();
+  });
+
+  it('says nothing about a demo account where there is none', async () => {
+    const view = await renderConnected({ demo_credentials: false });
+
+    await waitFor(() => expect(probeInstance).toHaveBeenCalled());
+    expect(view.queryByLabelText('Use the demo account')).toBeNull();
+    expect(view.queryByDisplayValue('demo@softtrack.dev')).toBeNull();
+  });
+
 });
