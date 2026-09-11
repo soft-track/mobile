@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { TeamRead } from '@/api/generated/models';
 import { InvitesBanner } from '@/team/invites-banner';
 import { NewTeamSheet } from '@/team/new-team-sheet';
+import { TeamAdminSheet } from '@/team/admin/team-admin-sheet';
 import { useTeams } from '@/team/team-context';
 import { useMemberCounts } from '@/team/use-member-counts';
 import { Icon } from '@/ui/icon';
@@ -28,11 +29,13 @@ function TeamRow({
   memberCount,
   active,
   onPress,
+  onLongPress,
 }: {
   team: TeamRead;
   memberCount: number | undefined;
   active: boolean;
   onPress: () => void;
+  onLongPress: () => void;
 }) {
   const t = useTokens();
   return (
@@ -41,6 +44,7 @@ function TeamRow({
       accessibilityLabel={team.name}
       accessibilityState={active ? { selected: true } : {}}
       onPress={onPress}
+      onLongPress={onLongPress}
     >
       <Card
         style={{
@@ -79,6 +83,7 @@ export function TeamsHome() {
 
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
+  const [administering, setAdministering] = useState<TeamRead | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const filtered = useMemo(() => {
@@ -132,6 +137,7 @@ export function TeamsHome() {
               memberCount={counts[item.id]}
               active={item.key === teamKey}
               onPress={() => setTeamKey(item.key)}
+              onLongPress={() => setAdministering(item)}
             />
           )}
           ListHeaderComponent={
@@ -188,6 +194,14 @@ export function TeamsHome() {
           }
         />
       )}
+
+      {administering ? (
+        <TeamAdminSheet
+          visible
+          onClose={() => setAdministering(null)}
+          team={administering}
+        />
+      ) : null}
 
       <NewTeamSheet visible={creating} onClose={() => setCreating(false)} />
     </SafeAreaView>

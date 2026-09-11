@@ -74,10 +74,11 @@ the real client modules against it, and the onboarding one writes real rows
 SOFTTRACK_LIVE_URL=http://localhost:8000 npm test
 ```
 
-Registration is throttled per IP and charged even on success, so running the
-onboarding suite repeatedly will eventually 429. The counter lives in the API
-process, so `docker compose restart backend` clears it without touching the
-database.
+The live suites between them register a handful of real accounts per run, and
+registration is throttled per IP and charged even on success — so a few full runs
+in a row will eventually 429. The counter lives in the API process, so
+`docker compose restart backend && docker compose up -d` clears it without
+touching the database.
 
 Note `experiments.typedRoutes` is a dev-time aid: the route union is written by
 `expo start`, not by `expo export`, so outside the dev server every path
