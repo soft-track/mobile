@@ -132,6 +132,10 @@ function TaskList({
             key={index}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: item.checked === true }}
+            // react-native-web does not map accessibilityState.checked onto
+            // aria-checked, so a screen reader on the web build would hear a
+            // checkbox with no state. Native reads the former, web the latter.
+            aria-checked={item.checked === true}
             accessibilityLabel={item.text}
             disabled={!isTask || !onToggleTask}
             onPress={() => onToggleTask?.(taskIndex)}
