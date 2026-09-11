@@ -54,7 +54,6 @@ function LinkedRow({
   issue: LinkedIssue;
   trailing?: ReactNode;
 }) {
-  const t = useTokens();
   return (
     <Pressable
       accessibilityRole="button"

@@ -24,6 +24,10 @@ import {
   WatchToggle,
 } from '@/issues/detail/sections';
 import { labelFor, useIssueProperties } from '@/issues/use-issue-properties';
+import { CommentsSection, mentionablesFrom, openIssueByIdentifier } from '@/comments/comments-section';
+import { MarkdownBody } from '@/markdown/markdown';
+import { MarkdownEditor } from '@/markdown/markdown-editor';
+import { toggleTaskAtIndex } from '@/markdown/tasks';
 import { useTeams } from '@/team/team-context';
 import { Icon } from '@/ui/icon';
 import { Alert, AppText, Button, Card, Field, Loading } from '@/ui/primitives';
@@ -199,20 +203,59 @@ export function IssueDetailScreen() {
               setTitle(null);
             }}
           />
-          <Field
-            label="Description"
-            value={description ?? issue.description ?? ''}
-            onChangeText={setDescription}
-            placeholder="Markdown supported"
-            multiline
-            style={{ minHeight: 100 }}
-            onBlur={() => {
-              if (description !== null && description !== (issue.description ?? '')) {
-                void patch({ description: description || null });
-              }
-              setDescription(null);
-            }}
-          />
+          <AppText variant="label">Description</AppText>
+          {description === null ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Edit description"
+              onPress={() => setDescription(issue.description ?? '')}
+            >
+              {issue.description?.trim() ? (
+                <MarkdownBody
+                  source={issue.description}
+                  people={mentionablesFrom(props.members)}
+                  onOpenIssue={(identifier) =>
+                    void openIssueByIdentifier(identifier, teams.map((team) => team.id))
+                  }
+                  // Ticking a box edits the source at that one character
+                  // rather than re-serialising the parsed markdown, so every
+                  // byte the author typed stays where it was.
+                  onToggleTask={(index) => {
+                    const next = toggleTaskAtIndex(issue.description ?? '', index);
+                    if (next !== null) void patch({ description: next });
+                  }}
+                />
+              ) : (
+                <AppText variant="hint">No description. Tap to add one.</AppText>
+              )}
+            </Pressable>
+          ) : (
+            <View style={{ gap: 8 }}>
+              <MarkdownEditor
+                value={description}
+                onChangeText={setDescription}
+                people={mentionablesFrom(props.members)}
+                placeholder="Markdown supported"
+                autoFocus
+              />
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Button
+                  style={{ flex: 1 }}
+                  onPress={() => {
+                    if (description !== (issue.description ?? '')) {
+                      void patch({ description: description || null });
+                    }
+                    setDescription(null);
+                  }}
+                >
+                  Save
+                </Button>
+                <Button variant="ghost" onPress={() => setDescription(null)}>
+                  Cancel
+                </Button>
+              </View>
+            </View>
+          )}
         </Card>
 
         <Card style={{ paddingHorizontal: 14 }}>
@@ -268,6 +311,12 @@ export function IssueDetailScreen() {
         <SubIssuesSection issue={issue} />
         <LinksSection issue={issue} />
         <DevelopmentSection issue={issue} />
+
+        <CommentsSection
+          issue={issue}
+          members={props.members}
+          teamIds={teams.map((candidate) => candidate.id)}
+        />
 
         <Card style={{ padding: 14 }}>
           <AppText variant="hint">Opened by {issue.creator.full_name}</AppText>
