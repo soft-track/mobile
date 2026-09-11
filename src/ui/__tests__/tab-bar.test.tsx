@@ -2,6 +2,7 @@ import type * as React from 'react';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { RAIL_WIDTH, SoftTrackTabBar } from '@/ui/tab-bar';
 import { ThemeProvider } from '@/ui/theme';
@@ -44,11 +45,17 @@ function tabBarProps(focusedIndex = 0): BarProps {
 }
 
 function renderBar(orientation: 'bar' | 'rail', focusedIndex = 0) {
+  // The bar polls the unread count for the inbox badge, so it needs a client.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
   return render(
     <SafeAreaProvider initialMetrics={METRICS}>
-      <ThemeProvider initialPreference="light">
-        <SoftTrackTabBar {...tabBarProps(focusedIndex)} orientation={orientation} />
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider initialPreference="light">
+          <SoftTrackTabBar {...tabBarProps(focusedIndex)} orientation={orientation} />
+        </ThemeProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>,
   );
 }
