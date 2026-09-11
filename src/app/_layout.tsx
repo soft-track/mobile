@@ -12,6 +12,7 @@ import { queryClient } from '@/api/query-client';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
 import { hydrateSession } from '@/auth/session';
 import { useDeepLinkCapture } from '@/auth/use-deep-link-capture';
+import { hydrateActiveTeam, TeamProvider } from '@/team/team-context';
 import { AppText, Button, Loading } from '@/ui/primitives';
 import {
   hydrateTheme,
@@ -32,7 +33,7 @@ import {
  */
 void SplashScreen.preventAutoHideAsync();
 
-type Hydrated = { theme: ThemePreference };
+type Hydrated = { theme: ThemePreference; teamKey: string | null };
 
 function RootNavigator() {
   const { status } = useAuth();
@@ -61,6 +62,10 @@ function RootNavigator() {
       <Stack.Protected guard={status === 'signedOut'}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
+
+      {/* Guarded by neither: a team link has to resolve whatever session it
+          finds, and decides for itself what to do about it. */}
+      <Stack.Screen name="[teamKey]" />
     </Stack>
   );
 }
@@ -142,12 +147,13 @@ export default function RootLayout() {
     // the instance URL, and the token -- each into its module-level mirror so
     // the axios interceptor can read them synchronously from the first request.
     void (async () => {
-      const [theme] = await Promise.all([
+      const [theme, , , teamKey] = await Promise.all([
         hydrateTheme(),
         hydrateInstanceUrl(),
         hydrateSession(),
+        hydrateActiveTeam(),
       ]);
-      setHydrated({ theme });
+      setHydrated({ theme, teamKey });
     })();
   }, []);
 
@@ -159,7 +165,9 @@ export default function RootLayout() {
         <Themed>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <Gate />
+              <TeamProvider initialTeamKey={hydrated.teamKey}>
+                <Gate />
+              </TeamProvider>
             </AuthProvider>
           </QueryClientProvider>
         </Themed>
