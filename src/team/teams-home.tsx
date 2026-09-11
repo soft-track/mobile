@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { TeamRead } from '@/api/generated/models';
+import { InvitesBanner } from '@/team/invites-banner';
 import { NewTeamSheet } from '@/team/new-team-sheet';
 import { useTeams } from '@/team/team-context';
 import { useMemberCounts } from '@/team/use-member-counts';
@@ -135,6 +136,8 @@ export function TeamsHome() {
           )}
           ListHeaderComponent={
             <View style={{ gap: 14, paddingBottom: 4 }}>
+              <InvitesBanner />
+
               {isError ? (
                 <Alert>Could not load your teams. Pull down to try again.</Alert>
               ) : null}

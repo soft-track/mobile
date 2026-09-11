@@ -349,3 +349,48 @@ export function Avatar({ name, color, size = 40 }: { name: string; color: string
     </View>
   );
 }
+
+/**
+ * A small tinted pill, the `.chip` from `frontend/src/index.css:550-567`.
+ *
+ * The web mixes the chip colour into the text with `color-mix(... 78%,
+ * neutral-900)`. There is no runtime equivalent here, so the tint colour is
+ * used for text directly over a low-alpha fill of itself -- close enough at
+ * this size, and it keeps the contrast tied to the same hue.
+ */
+export function Chip({ label, color }: { label: string; color: string }) {
+  const t = useTokens();
+  const rgb = color.startsWith('#') ? hexToRgb(color) : null;
+  return (
+    <View
+      style={{
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: t.radius.pill,
+        backgroundColor: rgb ? `rgba(${rgb}, 0.16)` : t.line.well,
+        borderWidth: 1,
+        borderColor: rgb ? `rgba(${rgb}, 0.28)` : t.line.hairline,
+      }}
+    >
+      <Text style={{ fontFamily: SANS, fontSize: 11, fontWeight: '600', color }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}
+
+/** A team role, shown where it is a fact rather than a choice. */
+export function RoleChip({ role }: { role: string }) {
+  const t = useTokens();
+  return (
+    <Chip
+      label={role === 'admin' ? 'Admin' : 'Member'}
+      color={role === 'admin' ? t.brand[500] : t.neutral[500]}
+    />
+  );
+}

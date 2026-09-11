@@ -63,8 +63,10 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
 
-      {/* Guarded by neither: a team link has to resolve whatever session it
-          finds, and decides for itself what to do about it. */}
+      {/* Guarded by neither: an invitation has to be readable before you have
+          an account, and a team link has to resolve once you do. Both decide
+          for themselves what to do with the session they find. */}
+      <Stack.Screen name="invite/[token]" />
       <Stack.Screen name="[teamKey]" />
     </Stack>
   );
