@@ -129,4 +129,13 @@ describe('LoginScreen, once the instance has answered', () => {
     expect(view.queryByDisplayValue('demo@softtrack.dev')).toBeNull();
   });
 
+  it('offers sign-up only where registration is open', async () => {
+    const open = await renderConnected({ open_registration: true });
+    expect(await open.findByLabelText('Create an account')).toBeTruthy();
+
+    // An invite-only instance would make the register screen a dead end.
+    const closed = await renderConnected({ open_registration: false });
+    await waitFor(() => expect(probeInstance).toHaveBeenCalled());
+    expect(closed.queryByLabelText('Create an account')).toBeNull();
+  });
 });
