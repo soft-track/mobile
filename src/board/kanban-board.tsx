@@ -24,7 +24,7 @@ import { RAIL_WIDTH } from '@/ui/tab-bar';
 import { COLLAPSED_CATEGORIES } from '@/issues/issue-meta';
 import { Icon } from '@/ui/icon';
 import { useSizeClass } from '@/ui/layout';
-import { AppText } from '@/ui/primitives';
+import { AppText, Dot } from '@/ui/primitives';
 import { useTokens } from '@/ui/theme';
 
 /** How long a press has to be held before the card lifts. */
@@ -59,9 +59,7 @@ function ColumnHeader({
         paddingVertical: 10,
       }}
     >
-      <View
-        style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: status.color }}
-      />
+      <Dot color={status.color} />
       <AppText variant="label" numberOfLines={1} style={{ color: t.neutral[800] }}>
         {status.name}
       </AppText>
@@ -283,14 +281,7 @@ export function KanbanBoard({
                   }
                   style={{ flex: 1, alignItems: 'center', paddingVertical: 12, gap: 8 }}
                 >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: status.color,
-                    }}
-                  />
+                  <Dot color={status.color} />
                   <AppText variant="identifier">{columnIssues.length}</AppText>
                 </Pressable>
               ) : (

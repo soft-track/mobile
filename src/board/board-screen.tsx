@@ -25,7 +25,7 @@ import { TeamSwitcher } from '@/team/team-switcher';
 import { href } from '@/ui/href';
 import { Icon } from '@/ui/icon';
 import { useIsMultiPane } from '@/ui/layout';
-import { AppText, Button, Loading, TeamBadge } from '@/ui/primitives';
+import { AppText, Button, Dot, Loading, TeamBadge } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -303,14 +303,7 @@ export function BoardScreen() {
                   moving?.status.id === status.id ? t.line.navActive : 'transparent',
               }}
             >
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: status.color,
-                }}
-              />
+              <Dot color={status.color} size={10} />
               <AppText variant="body" style={{ flex: 1 }}>
                 {status.name}
               </AppText>

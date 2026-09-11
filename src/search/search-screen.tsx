@@ -8,7 +8,7 @@ import type { SearchHit } from '@/api/generated/models';
 import { useTeams } from '@/team/team-context';
 import { href } from '@/ui/href';
 import { useIsMultiPane } from '@/ui/layout';
-import { AppText, Card, Field, Loading, TeamBadge } from '@/ui/primitives';
+import { AppText, Card, Dot, Field, Loading, TeamBadge } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useDebouncedValue } from '@/ui/use-debounced-value';
 import { useTokens } from '@/ui/theme';
@@ -157,14 +157,7 @@ export function SearchScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <TeamBadge teamKey={item.team_key} size={20} />
                   <AppText variant="identifier">{item.identifier}</AppText>
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: item.status.color,
-                    }}
-                  />
+                  <Dot color={item.status.color} />
                   <View style={{ flex: 1 }} />
                   <AppText variant="hint">{matchedInLabel(item)}</AppText>
                 </View>

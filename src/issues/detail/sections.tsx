@@ -20,7 +20,7 @@ import { errorDetail } from '@/api/errors';
 import { IssuePicker } from '@/issues/detail/issue-picker';
 import { Icon } from '@/ui/icon';
 import { href } from '@/ui/href';
-import { Alert, AppText, Button, Card, Field } from '@/ui/primitives';
+import { Alert, AppText, Button, Card, Dot, Field } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -67,9 +67,7 @@ function LinkedRow({
         paddingHorizontal: 12,
       }}
     >
-      <View
-        style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: issue.status.color }}
-      />
+      <Dot color={issue.status.color} />
       <View style={{ flex: 1 }}>
         <AppText variant="identifier">{issue.identifier}</AppText>
         <AppText variant="body" numberOfLines={1} style={{ fontSize: 14 }}>

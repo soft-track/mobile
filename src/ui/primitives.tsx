@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { resolveColor } from '@/ui/color';
 import { useTokens } from '@/ui/theme';
 import type { Tokens } from '@/ui/tokens';
 
@@ -325,6 +326,7 @@ export function TeamBadge({ teamKey, size = 44 }: { teamKey: string; size?: numb
 
 /** Circular initials on the server-supplied `avatar_color`. */
 export function Avatar({ name, color, size = 40 }: { name: string; color: string; size?: number }) {
+  const t = useTokens();
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
@@ -338,7 +340,7 @@ export function Avatar({ name, color, size = 40 }: { name: string; color: string
         width: size,
         height: size,
         borderRadius: 999,
-        backgroundColor: color,
+        backgroundColor: resolveColor(color, t, t.brand[600]),
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -360,7 +362,8 @@ export function Avatar({ name, color, size = 40 }: { name: string; color: string
  */
 export function Chip({ label, color }: { label: string; color: string }) {
   const t = useTokens();
-  const rgb = color.startsWith('#') ? hexToRgb(color) : null;
+  const resolved = resolveColor(color, t);
+  const rgb = resolved.startsWith('#') ? hexToRgb(resolved) : null;
   return (
     <View
       style={{
@@ -372,7 +375,7 @@ export function Chip({ label, color }: { label: string; color: string }) {
         borderColor: rgb ? `rgba(${rgb}, 0.28)` : t.line.hairline,
       }}
     >
-      <Text style={{ fontFamily: SANS, fontSize: 11, fontWeight: '600', color }}>
+      <Text style={{ fontFamily: SANS, fontSize: 11, fontWeight: '600', color: resolved }}>
         {label}
       </Text>
     </View>
@@ -391,6 +394,36 @@ export function RoleChip({ role }: { role: string }) {
     <Chip
       label={role === 'admin' ? 'Admin' : 'Member'}
       color={role === 'admin' ? t.brand[500] : t.neutral[500]}
+    />
+  );
+}
+
+/**
+ * The coloured dot that stands for a status, label or project.
+ *
+ * Colours arrive from the server and are not always paintable -- the web will
+ * happily store a CSS custom property -- so every one goes through
+ * `resolveColor` on the way to a style.
+ */
+export function Dot({
+  color,
+  size = 8,
+  label,
+}: {
+  color: string | null | undefined;
+  size?: number;
+  label?: string;
+}) {
+  const t = useTokens();
+  return (
+    <View
+      accessibilityLabel={label}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: resolveColor(color, t),
+      }}
     />
   );
 }
