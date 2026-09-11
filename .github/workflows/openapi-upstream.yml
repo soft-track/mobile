@@ -1,0 +1,40 @@
+name: OpenAPI upstream
+
+# The API contract is produced in soft-track/soft-track and vendored here, so no
+# single CI run sees both sides. This watches for drift.
+#
+# Deliberately a scheduled job rather than a PR check: the backend legitimately
+# moves ahead of the mobile client, and red-lighting every mobile PR because a
+# new endpoint landed elsewhere would be wrong. Failing a cron is the right
+# volume for "the vendored copy is behind".
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Vendored schema is current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the upstream schema
+        run: |
+          curl -fsS \
+            https://raw.githubusercontent.com/soft-track/soft-track/main/backend/openapi.json \
+            -o /tmp/upstream.json
+
+      - name: Compare
+        run: |
+          if ! diff -q openapi/openapi.json /tmp/upstream.json >/dev/null; then
+            echo "::warning::openapi/openapi.json is behind soft-track/soft-track@main."
+            echo "Run 'npm run sync:openapi' then 'npm run generate:api' and commit both."
+            diff <(python3 -m json.tool openapi/openapi.json) \
+                 <(python3 -m json.tool /tmp/upstream.json) | head -60 || true
+            exit 1
+          fi
+          echo "Vendored schema matches upstream."
