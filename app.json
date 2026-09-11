@@ -44,6 +44,14 @@
             "backgroundColor": "#0c0b15"
           }
         }
+      ],
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SoftTrack uses your photo library to attach screenshots to issues.",
+          "cameraPermission": "SoftTrack uses the camera to attach a photo to an issue."
+        }
       ]
     ],
     "experiments": {
