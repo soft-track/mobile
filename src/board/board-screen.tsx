@@ -12,6 +12,7 @@ import { IssueList } from '@/board/issue-list';
 import { KanbanBoard } from '@/board/kanban-board';
 import { useStatusChange } from '@/board/use-status-change';
 import { CycleBanner, CyclesSheet } from '@/cycles/cycles-screen';
+import { ReportsSheet } from '@/reports/reports-sheet';
 import { useListViewsTeamsTeamIdViewsGet } from '@/api/generated/endpoints/views/views';
 import { useAuth } from '@/auth/auth-context';
 import { fromViewFilters } from '@/views/saved-views';
@@ -56,6 +57,7 @@ export function BoardScreen() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewsOpen, setViewsOpen] = useState(false);
   const [cyclesOpen, setCyclesOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [creating, setCreating] = useState(false);
   const [moving, setMoving] = useState<IssueRead | null>(null);
@@ -160,6 +162,22 @@ export function BoardScreen() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Reports"
+          onPress={() => setReportsOpen(true)}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: t.radius.control,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: t.line.ghost,
+          }}
+        >
+          <Icon name="chart" size={16} color={t.neutral[600]} />
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel="Saved views"
           onPress={() => setViewsOpen(true)}
           style={{
@@ -216,6 +234,12 @@ export function BoardScreen() {
           onMovePress={setMoving}
         />
       )}
+
+      <ReportsSheet
+        visible={reportsOpen}
+        onClose={() => setReportsOpen(false)}
+        team={team}
+      />
 
       <CyclesSheet
         visible={cyclesOpen}
