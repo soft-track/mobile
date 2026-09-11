@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 
+import { useUnreadCountNotificationsUnreadCountGet } from '@/api/generated/endpoints/notifications/notifications';
 import { Icon, type IconName } from '@/ui/icon';
 import { useTokens } from '@/ui/theme';
 
@@ -36,6 +37,19 @@ export function SoftTrackTabBar({
   const t = useTokens();
   const insets = useSafeAreaInsets();
   const rail = orientation === 'rail';
+
+  /**
+   * The unread badge.
+   *
+   * Polled rather than pushed, at the same minute the web uses, and only while
+   * the app is in front -- there is no realtime channel, and a phone that polls
+   * in the background is a phone with a flat battery. Real push needs a backend
+   * that can register device tokens; see the README.
+   */
+  const unread = useUnreadCountNotificationsUnreadCountGet({
+    query: { refetchInterval: 60_000, refetchIntervalInBackground: false },
+  });
+  const unreadCount = unread.data?.unread ?? 0;
 
   return (
     <View
@@ -105,6 +119,28 @@ export function SoftTrackTabBar({
               }}
             >
               <Icon name={ICONS[route.name] ?? 'board'} size={20} color={color} />
+
+              {route.name === 'inbox' && unreadCount > 0 ? (
+                <View
+                  accessibilityLabel={`${unreadCount} unread`}
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: 4,
+                    minWidth: 16,
+                    height: 16,
+                    paddingHorizontal: 4,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: t.danger[500],
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#ffffff' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
             </View>
             <Text
               numberOfLines={1}

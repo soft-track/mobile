@@ -217,6 +217,21 @@ export function LoginScreen() {
         </Button>
       </Card>
 
+      {/* Only offered once the instance says sign-ups are open -- on an
+          invite-only instance the register screen is a dead end. */}
+      {config?.open_registration ? (
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Create an account"
+          onPress={() => router.push('/register')}
+          style={{ alignSelf: 'center' }}
+        >
+          <AppText variant="label" style={{ color: t.brand[600] }}>
+            Create an account
+          </AppText>
+        </Pressable>
+      ) : null}
+
       <AppText variant="hint" style={{ textAlign: 'center' }}>
         Self-hosted? Point the server link at your instance.
       </AppText>

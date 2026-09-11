@@ -11,6 +11,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 export type IconName =
   | 'home'
   | 'board'
+  | 'list'
   | 'search'
   | 'bell'
   | 'users'
@@ -19,7 +20,10 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'check'
-  | 'logout';
+  | 'logout'
+  | 'trash'
+  | 'plus'
+  | 'chart';
 
 export function Icon({
   name,
@@ -52,6 +56,10 @@ export function Icon({
           <Rect x="9.5" y="4" width="5" height="11" rx="1.5" {...stroke} />
           <Rect x="16" y="4" width="5" height="8" rx="1.5" {...stroke} />
         </>
+      ) : null}
+
+      {name === 'list' ? (
+        <Path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" {...stroke} />
       ) : null}
 
       {name === 'search' ? (
@@ -105,6 +113,19 @@ export function Icon({
       ) : null}
 
       {name === 'check' ? <Path d="m5 12.5 4.5 4.5L19 7.5" {...stroke} /> : null}
+
+      {name === 'chart' ? (
+        <Path d="M4 20V10M10 20V4M16 20v-7M22 20H2" {...stroke} />
+      ) : null}
+
+      {name === 'plus' ? <Path d="M12 5v14M5 12h14" {...stroke} /> : null}
+
+      {name === 'trash' ? (
+        <Path
+          d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M10 11v5M14 11v5"
+          {...stroke}
+        />
+      ) : null}
 
       {name === 'logout' ? (
         <Path

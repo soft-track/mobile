@@ -30,10 +30,16 @@ Open it in [Expo Go](https://expo.dev/go). At the login screen enter your machin
 
 ```
 src/app/            expo-router routes — thin wrappers, no logic
-  (auth)/login      signed out
+  (auth)/           signed out: login, register
   (app)/            signed in: Home, Board, Search, Inbox, You
+  invite/[token]    an invitation — readable either way, so guarded by neither
+  [teamKey]         /ENG — sets the active team, then hands to Board
 src/api/            HTTP client, instance URL, generated client
-src/auth/           session store and auth context
+src/auth/           session store, auth context, deep-link capture
+src/team/           team context, switcher, creation, invitations
+src/board/          board and list views, filters, drag-to-move
+src/issues/         priority and status metadata
+src/offline/        connectivity, cache persistence, the mutation queue
 src/ui/             design tokens, theme, primitives, navigation chrome
 openapi/            the vendored API contract codegen reads
 ```
@@ -61,11 +67,24 @@ Tokens in `src/ui/tokens.ts` are transcribed from the web's `frontend/src/index.
 npm run lint && npm run typecheck && npm test
 ```
 
-The API integration suite is opt-in because it needs a live server:
+Two integration suites are opt-in because they need a live server. They drive
+the real client modules against it, and the onboarding one writes real rows
+(fresh accounts and team keys per run):
 
 ```bash
 SOFTTRACK_LIVE_URL=http://localhost:8000 npm test
 ```
+
+The live suites between them register a handful of real accounts per run, and
+registration is throttled per IP and charged even on success — so a few full runs
+in a row will eventually 429. The counter lives in the API process, so
+`docker compose restart backend && docker compose up -d` clears it without
+touching the database.
+
+Note `experiments.typedRoutes` is a dev-time aid: the route union is written by
+`expo start`, not by `expo export`, so outside the dev server every path
+typechecks permissively. Paths built at runtime go through `href()` in
+`src/ui/href.ts` rather than being cast at each call site.
 
 ## Planning
 
@@ -79,10 +98,38 @@ The mockups reuse the web app's design tokens (brand `#6342db`, tinted neutrals,
 
 ## Status
 
-The foundation is in: navigation shell, theming, the authenticated API client, and a working sign-in against any instance. Every other screen is a placeholder pointing at its issue.
+Every tracked issue is implemented except push notifications, which have no
+backend to talk to. Sign in to any instance, register, accept invitations,
+manage teams, work a board, create and edit issues with sub-issues and links,
+comment in GitHub-flavored markdown, attach photos and files, search, run cycles,
+read the four reports, save views, administer a team or the whole instance, and
+keep working with no connection.
 
 Known gaps, tracked rather than hidden:
 
-- **Only the phone layout has been seen on a device.** The medium and expanded layouts are covered by tests against the mockup geometry, but verifying them for real needs a tablet or an Android emulator.
-- **No aurora or glass blur yet.** The web's translucent panels are approximated with opaque surfaces; `backdrop-filter` has no React Native equivalent and per-surface blur is expensive on Android.
-- **Team rows show no member counts.** `TeamRead` does not carry them, and fetching them today would mean one request per row.
+- **Nothing has been seen on a device yet.** The suites cover the logic, the
+  mockup geometry and that the trees render, but no one has run this on
+  hardware. The drag gesture in particular is unverified by touch, which is why
+  every move is also reachable by tapping a card. The medium and expanded
+  layouts would need a tablet or an Android emulator to check for real.
+- **Invitation links cannot be true universal links.** A `https://your-instance/invite/…`
+  link can only open the app if that exact domain is declared in the build, which
+  is impossible for arbitrary self-hosted hosts. `softtrack://invite/<token>`
+  works, and falls back to asking you to sign in first, since a custom-scheme
+  link carries no instance.
+- **Push notifications are not built, because the API has no way to register a
+  device.** Issue #10 anticipated this ("requires a backend addition for device
+  token registration + push delivery"). There is no `/devices` endpoint and
+  nothing APNs- or FCM-shaped anywhere in the schema, so the in-app inbox and
+  the unread badge are what ship; the badge polls once a minute while the app is
+  in front rather than pretending to be pushed. Real push also needs a dev build
+  and signing credentials, neither of which exists yet.
+- **Member counts cost one request per team.** `TeamRead` carries no count, so
+  the teams list asks each team for its members. A `member_count` field upstream
+  would remove the fan-out and help the web too.
+- **Offline is verified as logic, not as behaviour.** The queue, the conflict
+  rule and the cache are covered by tests, but nobody has watched a phone lose
+  signal, move a card and come back. That needs a device.
+- **No aurora or glass blur yet.** The web's translucent panels are approximated
+  with opaque surfaces; `backdrop-filter` has no React Native equivalent and
+  per-surface blur is expensive on Android.

@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
 import { hydrateInstanceUrl } from '@/api/instance';
 import { queryClient } from '@/api/query-client';
+import { startConnectivityWatch } from '@/offline/connectivity';
+import { MAX_AGE_MS, persister } from '@/offline/persistence';
+import { registerQueuedMutations } from '@/offline/queue';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
 import { hydrateSession } from '@/auth/session';
 import { useDeepLinkCapture } from '@/auth/use-deep-link-capture';
+import { hydrateActiveTeam, TeamProvider } from '@/team/team-context';
 import { AppText, Button, Loading } from '@/ui/primitives';
 import {
   hydrateTheme,
@@ -32,7 +37,7 @@ import {
  */
 void SplashScreen.preventAutoHideAsync();
 
-type Hydrated = { theme: ThemePreference };
+type Hydrated = { theme: ThemePreference; teamKey: string | null };
 
 function RootNavigator() {
   const { status } = useAuth();
@@ -57,10 +62,20 @@ function RootNavigator() {
           structurally impossible. */}
       <Stack.Protected guard={status !== 'signedOut'}>
         <Stack.Screen name="(app)" />
+        {/* Pushed over the tabs rather than being tab destinations: both are
+            things you enter from somewhere and come back from. */}
+        <Stack.Screen name="issue/[id]" />
+        <Stack.Screen name="new-issue" options={{ presentation: 'modal' }} />
       </Stack.Protected>
       <Stack.Protected guard={status === 'signedOut'}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
+
+      {/* Guarded by neither: an invitation has to be readable before you have
+          an account, and a team link has to resolve once you do. Both decide
+          for themselves what to do with the session they find. */}
+      <Stack.Screen name="invite/[token]" />
+      <Stack.Screen name="[teamKey]" />
     </Stack>
   );
 }
@@ -138,16 +153,24 @@ export default function RootLayout() {
   const [hydrated, setHydrated] = useState<Hydrated | null>(null);
 
   useEffect(() => {
+    // Mutation functions have to be registered by key before a persisted queue
+    // is restored, or a paused mutation comes back as data with nothing to run.
+    registerQueuedMutations(queryClient);
+    return startConnectivityWatch();
+  }, []);
+
+  useEffect(() => {
     // One pass over persisted state before anything renders: the stored theme,
     // the instance URL, and the token -- each into its module-level mirror so
     // the axios interceptor can read them synchronously from the first request.
     void (async () => {
-      const [theme] = await Promise.all([
+      const [theme, , , teamKey] = await Promise.all([
         hydrateTheme(),
         hydrateInstanceUrl(),
         hydrateSession(),
+        hydrateActiveTeam(),
       ]);
-      setHydrated({ theme });
+      setHydrated({ theme, teamKey });
     })();
   }, []);
 
@@ -155,15 +178,27 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider initialPreference={hydrated.theme}>
-      <SafeAreaProvider>
-        <Themed>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <Gate />
-            </AuthProvider>
-          </QueryClientProvider>
-        </Themed>
-      </SafeAreaProvider>
+      {/* Required by react-native-gesture-handler, which the board's
+          long-press-to-lift drag is built on. */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <Themed>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={{ persister, maxAge: MAX_AGE_MS }}
+              // Anything queued while offline is replayed here, once the
+              // restored cache is back in place.
+              onSuccess={() => void queryClient.resumePausedMutations()}
+            >
+              <AuthProvider>
+                <TeamProvider initialTeamKey={hydrated.teamKey}>
+                  <Gate />
+                </TeamProvider>
+              </AuthProvider>
+            </PersistQueryClientProvider>
+          </Themed>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }

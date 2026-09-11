@@ -11,3 +11,6 @@ export const THEME_KEY = 'softtrack.theme';
 
 /** Base URL of the instance the user signed in to. */
 export const INSTANCE_KEY = 'softtrack.instance';
+
+/** The team key whose board the Board tab shows. */
+export const ACTIVE_TEAM_KEY = 'softtrack.team';
