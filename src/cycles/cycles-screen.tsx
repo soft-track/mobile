@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert as RNAlert, Pressable, ScrollView, View } from 'react-native';
+import { Alert as RNAlert, Pressable, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -114,7 +114,6 @@ export function CyclesSheet({
   onClose: () => void;
   team: TeamRead;
 }) {
-  const t = useTokens();
   const queryClient = useQueryClient();
   const cycles = useListCyclesTeamsTeamIdCyclesGet(team.id, { query: { enabled: visible } });
 
