@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -7,10 +7,14 @@ import { useListIssuesTeamsTeamIdIssuesGet } from '@/api/generated/endpoints/iss
 import type { IssueRead, StatusRead } from '@/api/generated/models';
 import { buildChips, FilterChips } from '@/board/filter-chips';
 import { FilterSheet } from '@/board/filter-sheet';
-import { fromParams, toParams, toQueryParams, type BoardFilters } from '@/board/filters';
+import { fromParams, isEmpty, toParams, toQueryParams, type BoardFilters } from '@/board/filters';
 import { IssueList } from '@/board/issue-list';
 import { KanbanBoard } from '@/board/kanban-board';
 import { useStatusChange } from '@/board/use-status-change';
+import { useListViewsTeamsTeamIdViewsGet } from '@/api/generated/endpoints/views/views';
+import { useAuth } from '@/auth/auth-context';
+import { fromViewFilters } from '@/views/saved-views';
+import { ViewsSheet } from '@/views/views-sheet';
 import { useTeamData } from '@/board/use-team-data';
 import { NewTeamSheet } from '@/team/new-team-sheet';
 import { useTeams } from '@/team/team-context';
@@ -49,9 +53,36 @@ export function BoardScreen() {
 
   const [view, setView] = useState<BoardView>('board');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [viewsOpen, setViewsOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [creating, setCreating] = useState(false);
   const [moving, setMoving] = useState<IssueRead | null>(null);
+
+  const { user } = useAuth();
+  const views = useListViewsTeamsTeamIdViewsGet(team?.id ?? 0, {
+    query: { enabled: Boolean(team) },
+  });
+
+  /**
+   * Land on the default view, at most once per team.
+   *
+   * `effective_default_id` is the server's own resolution of yours, then the
+   * team's, then nothing -- so the client does not re-derive that order. A ref
+   * rather than state because nothing renders differently for having landed; it
+   * only stops the redirect happening again after someone clears the filters on
+   * purpose.
+   */
+  const landed = useRef<number | null>(null);
+  useEffect(() => {
+    if (!team || views.isPending) return;
+    if (landed.current === team.id) return;
+    landed.current = team.id;
+
+    const defaultId = views.data?.effective_default_id;
+    if (!defaultId || !isEmpty(filters)) return;
+    const view = views.data?.items.find((candidate) => candidate.id === defaultId);
+    if (view) router.setParams(toParams(fromViewFilters(view.filters)));
+  }, [team, views.isPending, views.data, filters]);
 
   const data = useTeamData(team);
   const queryParams = useMemo(
@@ -127,6 +158,22 @@ export function BoardScreen() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Saved views"
+          onPress={() => setViewsOpen(true)}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: t.radius.control,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: t.line.ghost,
+          }}
+        >
+          <Icon name="list" size={16} color={t.neutral[600]} />
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel="Filter"
           onPress={() => setFilterOpen(true)}
           style={{
@@ -165,6 +212,15 @@ export function BoardScreen() {
           onMovePress={setMoving}
         />
       )}
+
+      <ViewsSheet
+        visible={viewsOpen}
+        onClose={() => setViewsOpen(false)}
+        team={team}
+        user={user}
+        filters={filters}
+        onApply={setFilters}
+      />
 
       <FilterSheet
         visible={filterOpen}
