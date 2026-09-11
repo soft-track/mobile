@@ -15,6 +15,7 @@ import {
 import { errorDetail } from '@/api/errors';
 import { instanceLabel, setInstanceUrl } from '@/api/instance';
 import { useAuth } from '@/auth/auth-context';
+import { SiteAdminSheet } from '@/admin/site-admin-sheet';
 import { isValidUsername } from '@/settings/username';
 import { useIsMultiPane } from '@/ui/layout';
 import { AppText, Alert, Avatar, Button, Card, Field } from '@/ui/primitives';
@@ -39,7 +40,7 @@ const AVATAR_COLORS = [
   '#22c55e',
 ];
 
-type Panel = 'profile' | 'security' | 'notifications' | 'instance' | null;
+type Panel = 'profile' | 'security' | 'notifications' | 'instance' | 'admin' | null;
 
 export function YouScreen() {
   const t = useTokens();
@@ -78,6 +79,17 @@ export function YouScreen() {
           </Card>
         </View>
 
+        {/* Only for an account that actually has it; there is nothing to
+            discover here that the server would then refuse. */}
+        {user?.is_site_admin ? (
+          <View style={{ gap: 8 }}>
+            <AppText variant="eyebrow">ADMINISTRATION</AppText>
+            <Card>
+              <SettingsRow label="All users" onPress={() => setPanel('admin')} />
+            </Card>
+          </View>
+        ) : null}
+
         <View style={{ gap: 8 }}>
           <AppText variant="eyebrow">APPEARANCE</AppText>
           <ThemePreferenceControl />
@@ -112,6 +124,11 @@ export function YouScreen() {
       <NotificationsPanel
         visible={panel === 'notifications'}
         onClose={() => setPanel(null)}
+      />
+      <SiteAdminSheet
+        visible={panel === 'admin'}
+        onClose={() => setPanel(null)}
+        user={user}
       />
       <InstancePanel
         visible={panel === 'instance'}
