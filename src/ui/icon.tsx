@@ -11,6 +11,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 export type IconName =
   | 'home'
   | 'board'
+  | 'list'
   | 'search'
   | 'bell'
   | 'users'
@@ -52,6 +53,10 @@ export function Icon({
           <Rect x="9.5" y="4" width="5" height="11" rx="1.5" {...stroke} />
           <Rect x="16" y="4" width="5" height="8" rx="1.5" {...stroke} />
         </>
+      ) : null}
+
+      {name === 'list' ? (
+        <Path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" {...stroke} />
       ) : null}
 
       {name === 'search' ? (

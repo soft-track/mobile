@@ -1,3 +1,7 @@
+// react-native-gesture-handler ships its own jest setup; without it any tree
+// containing a GestureDetector throws on render.
+import 'react-native-gesture-handler/jestSetup';
+
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
   return {
