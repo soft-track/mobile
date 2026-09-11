@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mobile:
+    name: Mobile · lint + typecheck + test + bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"        # matches the main repo's frontend job
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test -- --ci
+
+      # Bundling both platforms is a real build check that needs neither Xcode
+      # nor the Android SDK, so it catches Metro resolution and native-module
+      # import errors that tsc cannot see.
+      - name: Bundle
+        run: npx expo export --platform ios --platform android --output-dir dist
+
+  api-contract:
+    name: API contract · generated client matches the vendored schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      # src/api/generated is orval's output from openapi/openapi.json. If either
+      # is edited without regenerating, the typed client drifts away from the
+      # contract it claims to implement. The backend repo guards openapi.json
+      # the same way; this guards the half that lives here.
+      - name: Regenerate the client and fail on drift
+        run: |
+          npm run generate:api
+          if ! git diff --quiet -- src/api/generated; then
+            echo "::error::src/api/generated is out of date."
+            echo "Run 'npm run generate:api' and commit the result."
+            git diff --stat -- src/api/generated
+            exit 1
+          fi
+          echo "Generated client matches openapi/openapi.json."
