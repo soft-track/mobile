@@ -11,6 +11,7 @@ import { fromParams, isEmpty, toParams, toQueryParams, type BoardFilters } from 
 import { IssueList } from '@/board/issue-list';
 import { KanbanBoard } from '@/board/kanban-board';
 import { useStatusChange } from '@/board/use-status-change';
+import { CycleBanner, CyclesSheet } from '@/cycles/cycles-screen';
 import { useListViewsTeamsTeamIdViewsGet } from '@/api/generated/endpoints/views/views';
 import { useAuth } from '@/auth/auth-context';
 import { fromViewFilters } from '@/views/saved-views';
@@ -54,6 +55,7 @@ export function BoardScreen() {
   const [view, setView] = useState<BoardView>('board');
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewsOpen, setViewsOpen] = useState(false);
+  const [cyclesOpen, setCyclesOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [creating, setCreating] = useState(false);
   const [moving, setMoving] = useState<IssueRead | null>(null);
@@ -193,6 +195,8 @@ export function BoardScreen() {
         </Pressable>
       </View>
 
+      <CycleBanner team={team} onOpen={() => setCyclesOpen(true)} />
+
       <FilterChips chips={chips} onAdd={() => setFilterOpen(true)} />
 
       {issuesQuery.isPending ? (
@@ -212,6 +216,12 @@ export function BoardScreen() {
           onMovePress={setMoving}
         />
       )}
+
+      <CyclesSheet
+        visible={cyclesOpen}
+        onClose={() => setCyclesOpen(false)}
+        team={team}
+      />
 
       <ViewsSheet
         visible={viewsOpen}
