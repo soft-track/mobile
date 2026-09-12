@@ -9,7 +9,7 @@ import {
 } from '@/api/generated/endpoints/auth/auth';
 import type { UserMe } from '@/api/generated/models';
 import { isNetworkError } from '@/api/errors';
-import { getInstanceUrl, setInstanceUrl } from '@/api/instance';
+import { setInstanceUrl, useInstanceUrl } from '@/api/instance';
 import { persistToken, useAccessToken } from '@/auth/session';
 
 /**
@@ -51,7 +51,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const token = useAccessToken();
   const queryClient = useQueryClient();
-  const instanceUrl = getInstanceUrl();
+  const instanceUrl = useInstanceUrl();
 
   const meQuery = useMeAuthMeGet({
     query: {
@@ -63,10 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setSession = useCallback(
     (nextToken: string, user: UserMe) => {
-      void persistToken(nextToken);
-      // Seed the cache from the login response's embedded `user` rather than
-      // making a second round trip to /auth/me.
+      // Seed /auth/me from the login response's embedded `user` BEFORE flipping
+      // the token, not after. Persisting the token re-renders the gate; if the
+      // cache were seeded second, that render would land in the gap between "has
+      // a token" and "has a user" and read as signed-out, and nothing would push
+      // it off the login screen. Seeding first means the token-driven render
+      // already sees the user. Saves the /auth/me round trip either way.
       queryClient.setQueryData(getMeAuthMeGetQueryKey(), user);
+      void persistToken(nextToken);
     },
     [queryClient],
   );

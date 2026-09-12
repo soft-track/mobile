@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+
 import Axios from 'axios';
 
 import { INSTANCE_KEY } from '@/storage/keys';
@@ -10,20 +12,46 @@ import { readPref, removePref, writePref } from '@/storage/prefs';
  * (`frontend/src/api/client.ts:6`) -- a mobile build has to reach whichever
  * self-hosted instance the user types in. The value is held in a module-level
  * mirror so the axios request interceptor can read it synchronously.
+ *
+ * It is also an external store, for the same reason the token is: sign-in sets
+ * the instance and the session together, and a component that decides whether
+ * you are signed in has to see both change. Reading the mirror non-reactively
+ * meant the auth gate could render once with the instance still absent and never
+ * re-render to notice it had arrived -- signing in, storing a token, and then
+ * sitting on the login screen anyway.
  */
 let instanceUrl: string | null = null;
+const listeners = new Set<() => void>();
+
+function emit() {
+  for (const listener of listeners) listener();
+}
 
 export function getInstanceUrl(): string | null {
   return instanceUrl;
 }
 
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Re-renders on every instance change, so the auth gate reacts to sign-in. */
+export function useInstanceUrl(): string | null {
+  return useSyncExternalStore(subscribe, getInstanceUrl, getInstanceUrl);
+}
+
 export async function hydrateInstanceUrl(): Promise<string | null> {
   instanceUrl = await readPref(INSTANCE_KEY);
+  emit();
   return instanceUrl;
 }
 
 export async function setInstanceUrl(url: string | null): Promise<void> {
   instanceUrl = url;
+  emit();
   if (url === null) await removePref(INSTANCE_KEY);
   else await writePref(INSTANCE_KEY, url);
 }
