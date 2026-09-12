@@ -51,13 +51,21 @@
         "expo-image-picker",
         {
           "photosPermission": "SoftTrack uses your photo library to attach screenshots to issues.",
-          "cameraPermission": "SoftTrack uses the camera to attach a photo to an issue."
+          "cameraPermission": "SoftTrack uses the camera to attach a photo to an issue.",
+          "microphonePermission": false
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9ae89fa2-3c30-4ca0-8034-8ccdff5fdb3a"
+      }
+    },
+    "owner": "wak327"
   }
 }
