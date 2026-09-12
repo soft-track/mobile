@@ -2,7 +2,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import type { IssueRead, StatusRead } from '@/api/generated/models';
 import { priorityColor } from '@/issues/issue-meta';
-import { Avatar, AppText } from '@/ui/primitives';
+import { Avatar, AppText, Dot } from '@/ui/primitives';
 import { useTokens } from '@/ui/theme';
 
 /**
@@ -103,9 +103,6 @@ export function IssueList({
 
 function StatusDot({ status }: { status: StatusRead }) {
   return (
-    <View
-      accessibilityLabel={status.name}
-      style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: status.color }}
-    />
+    <Dot color={status.color} size={10} label={status.name} />
   );
 }

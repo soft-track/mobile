@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -20,10 +20,11 @@ import {
   edgeScrollStep,
   type ColumnBounds,
 } from '@/board/column-layout';
+import { RAIL_WIDTH } from '@/ui/tab-bar';
 import { COLLAPSED_CATEGORIES } from '@/issues/issue-meta';
 import { Icon } from '@/ui/icon';
 import { useSizeClass } from '@/ui/layout';
-import { AppText } from '@/ui/primitives';
+import { AppText, Dot } from '@/ui/primitives';
 import { useTokens } from '@/ui/theme';
 
 /** How long a press has to be held before the card lifts. */
@@ -58,9 +59,7 @@ function ColumnHeader({
         paddingVertical: 10,
       }}
     >
-      <View
-        style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: status.color }}
-      />
+      <Dot color={status.color} />
       <AppText variant="label" numberOfLines={1} style={{ color: t.neutral[800] }}>
         {status.name}
       </AppText>
@@ -117,8 +116,23 @@ export function KanbanBoard({
   const pointerY = useSharedValue(0);
   const dragging = useSharedValue(false);
 
-  const [boardWidth, setBoardWidth] = useState(0);
+  const [measuredWidth, setMeasuredWidth] = useState(0);
   const [boardOriginX, setBoardOriginX] = useState(0);
+
+  /**
+   * The width the columns are sized from.
+   *
+   * A tab screen can be laid out while it is still detached, which fires
+   * onLayout once at zero and never again -- and a zero width collapses every
+   * column, and so every card, to nothing. So the window is the source, less
+   * the nav rail where there is one, and a real measurement refines it if one
+   * ever arrives.
+   */
+  const { width: windowWidth } = useWindowDimensions();
+  const boardWidth =
+    measuredWidth > 0
+      ? measuredWidth
+      : windowWidth - (sizeClass === 'compact' ? 0 : RAIL_WIDTH);
   const [lifted, setLifted] = useState<IssueRead | null>(null);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>(() =>
     Object.fromEntries(
@@ -133,7 +147,7 @@ export function KanbanBoard({
   const bounds = useRef<ColumnBounds[]>([]);
   const boardRef = useRef<View>(null);
 
-  const width = boardWidth > 0 ? columnWidth(sizeClass, boardWidth) : 0;
+  const width = columnWidth(sizeClass, boardWidth);
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollX.set(event.contentOffset.x);
@@ -207,13 +221,16 @@ export function KanbanBoard({
     <View
       ref={boardRef}
       style={{ flex: 1 }}
-      onLayout={() => {
-        // Screen-space origin, so the gesture's absoluteX can be converted into
-        // the content coordinates the columns were measured in.
-        boardRef.current?.measureInWindow((x, _y, w) => {
-          setBoardOriginX(x);
-          setBoardWidth(w);
-        });
+      onLayout={(event) => {
+        // Width comes from the layout event, which carries it synchronously.
+        // It used to come from measureInWindow, which is asynchronous and
+        // resolves to zero on web.
+        setMeasuredWidth(event.nativeEvent.layout.width);
+
+        // The screen-space origin is only needed to convert a drag's absoluteX
+        // into content coordinates, so it may arrive late or not at all; zero
+        // is correct whenever the board starts at the left edge.
+        boardRef.current?.measureInWindow((x) => setBoardOriginX(x));
       }}
     >
       <Animated.ScrollView
@@ -264,14 +281,7 @@ export function KanbanBoard({
                   }
                   style={{ flex: 1, alignItems: 'center', paddingVertical: 12, gap: 8 }}
                 >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: status.color,
-                    }}
-                  />
+                  <Dot color={status.color} />
                   <AppText variant="identifier">{columnIssues.length}</AppText>
                 </Pressable>
               ) : (

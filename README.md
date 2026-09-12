@@ -67,19 +67,33 @@ Tokens in `src/ui/tokens.ts` are transcribed from the web's `frontend/src/index.
 npm run lint && npm run typecheck && npm test
 ```
 
-Two integration suites are opt-in because they need a live server. They drive
-the real client modules against it, and the onboarding one writes real rows
-(fresh accounts and team keys per run):
+The integration suites are opt-in because they need a live server. They drive
+the real client modules against it — the same code the screens call — and several
+of them write real rows (fresh accounts and team keys per run):
 
 ```bash
-SOFTTRACK_LIVE_URL=http://localhost:8000 npm test
+SOFTTRACK_LIVE_URL=http://localhost:8000 npm run test:live
 ```
 
-The live suites between them register a handful of real accounts per run, and
-registration is throttled per IP and charged even on success — so a few full runs
-in a row will eventually 429. The counter lives in the API process, so
+`test:live` rather than `npm test`, because these suites **cannot run in
+parallel**. Registration is throttled per IP and charged even on success, and
+several suites register: run concurrently they exhaust the budget immediately,
+and the 429 that comes back is an `AxiosError` whose circular `req`/`res` pair
+crashes the jest worker trying to serialize it, so the failure surfaces as
+`Test suite failed to run` rather than as the throttle it is. `--runInBand`
+spreads them out. A few full runs in a row will still eventually 429; the
+counter lives in the API process, so
 `docker compose restart backend && docker compose up -d` clears it without
 touching the database.
+
+They also share one instance, so they pick their fixtures deliberately rather
+than by position — see `src/api/__tests__/support/team.ts`. `GET /teams` promises
+no order, and the team-administration and onboarding suites create teams the API
+offers no way to delete, so an instance these have run against accumulates empty
+teams permanently. Taking `teams[0]` eventually lands on one of those.
+
+Production is covered separately by `live-production.test.ts`, which stays
+read-only apart from a single scratch issue it deletes in the same run.
 
 Note `experiments.typedRoutes` is a dev-time aid: the route union is written by
 `expo start`, not by `expo export`, so outside the dev server every path

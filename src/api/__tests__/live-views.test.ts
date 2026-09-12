@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 import { loginAuthLoginPost } from '@/api/generated/endpoints/auth/auth';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import {
   createViewTeamsTeamIdViewsPost,
   deleteViewViewsViewIdDelete,
@@ -16,6 +15,7 @@ import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
 import { NO_FILTERS, sameFilters } from '@/board/filters';
 import { fromViewFilters, toViewFilters } from '@/views/saved-views';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * Saved views against a real instance.
@@ -40,7 +40,7 @@ describeLive('saved views against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
   });
 
   afterAll(async () => {

@@ -18,10 +18,10 @@ import {
   setWatchStateIssuesIssueIdWatchPut,
 } from '@/api/generated/endpoints/notifications/notifications';
 import { listStatusesTeamsTeamIdStatusesGet } from '@/api/generated/endpoints/statuses/statuses';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { StatusRead, TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * The issue detail sections against a real instance: sub-issues, links and
@@ -53,7 +53,7 @@ describeLive('issue detail against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
     statuses = await listStatusesTeamsTeamIdStatusesGet(team.id);
   });
 

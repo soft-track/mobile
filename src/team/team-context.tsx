@@ -9,6 +9,7 @@ import {
 
 import { useListMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
+import { useAccessToken } from '@/auth/session';
 import { ACTIVE_TEAM_KEY } from '@/storage/keys';
 import { readPref, writePref } from '@/storage/prefs';
 
@@ -44,8 +45,21 @@ export function TeamProvider({
   children: ReactNode;
 }) {
   const [storedKey, setStoredKey] = useState<string | null>(initialTeamKey);
-  const teamsQuery = useListMyTeamsTeamsGet({ query: { staleTime: 30_000 } });
-  const teams = useMemo(() => teamsQuery.data ?? [], [teamsQuery.data]);
+  // Gated on a session existing: this provider mounts outside the auth guard,
+  // and an ungated query fires GET /teams before anyone has signed in -- on
+  // web that relative request even "succeeds" against the dev server and hands
+  // back HTML where an array belongs.
+  const token = useAccessToken();
+  const teamsQuery = useListMyTeamsTeamsGet({
+    query: { staleTime: 30_000, enabled: Boolean(token) },
+  });
+  // Never trust the shape blindly: the cache is persisted for a week, and this
+  // provider sits above the error boundary -- a poisoned entry restored from
+  // storage must degrade to "no teams", not brick the whole app at boot.
+  const teams = useMemo(
+    () => (Array.isArray(teamsQuery.data) ? teamsQuery.data : []),
+    [teamsQuery.data],
+  );
 
   const setTeamKey = useCallback((key: string) => {
     setStoredKey(key);

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { IssueRead } from '@/api/generated/models';
 import { priorityColor } from '@/issues/issue-meta';
 import { Avatar, AppText } from '@/ui/primitives';
+import { resolveColor } from '@/ui/color';
 import { useTokens } from '@/ui/theme';
 
 /**
@@ -110,7 +111,7 @@ export function IssueCard({ issue }: { issue: IssueRead }) {
                 borderRadius: t.radius.pill,
                 backgroundColor: t.line.well,
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: label.color,
+                borderColor: resolveColor(label.color, t),
               }}
             >
               <Text style={{ fontSize: 10, color: t.neutral[600] }}>{label.name}</Text>

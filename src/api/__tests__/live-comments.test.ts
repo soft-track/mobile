@@ -16,14 +16,12 @@ import {
   getWatchStateIssuesIssueIdWatchGet,
   setWatchStateIssuesIssueIdWatchPut,
 } from '@/api/generated/endpoints/notifications/notifications';
-import {
-  listMyTeamsTeamsGet,
-  listTeamMembersTeamsTeamIdMembersGet,
-} from '@/api/generated/endpoints/teams/teams';
+import { listTeamMembersTeamsTeamIdMembersGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
 import { toggleTaskAtIndex } from '@/markdown/tasks';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * Comments and markdown against a real instance.
@@ -48,7 +46,7 @@ describeLive('comments against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
   });
 
   afterAll(async () => {

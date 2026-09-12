@@ -8,11 +8,11 @@ import {
   updateIssueIssuesIssueIdPatch,
 } from '@/api/generated/endpoints/issues/issues';
 import { listStatusesTeamsTeamIdStatusesGet } from '@/api/generated/endpoints/statuses/statuses';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { StatusRead, TeamRead } from '@/api/generated/models';
 import { toQueryParams } from '@/board/filters';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * The board's data path against a real instance: that the six filters narrow
@@ -36,7 +36,7 @@ describeLive('the board against a live instance', () => {
     });
     await persistToken(token.access_token);
 
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
     statuses = await listStatusesTeamsTeamIdStatusesGet(team.id);
   });
 

@@ -11,7 +11,7 @@ import type { BoardFilters } from '@/board/filters';
 import { NO_FILTERS } from '@/board/filters';
 import { PRIORITY_LABEL, PRIORITY_ORDER, priorityColor } from '@/issues/issue-meta';
 import { Icon } from '@/ui/icon';
-import { AppText, Button } from '@/ui/primitives';
+import { AppText, Button, Dot } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -48,16 +48,7 @@ function Group({ title, options }: { title: string; options: Option[] }) {
             backgroundColor: option.selected ? t.line.navActive : 'transparent',
           }}
         >
-          {option.color ? (
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: option.color,
-              }}
-            />
-          ) : null}
+          {option.color ? <Dot color={option.color} /> : null}
           <AppText variant="body" numberOfLines={1} style={{ flex: 1 }}>
             {option.label}
           </AppText>

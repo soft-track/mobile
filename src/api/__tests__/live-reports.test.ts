@@ -9,11 +9,11 @@ import {
   teamCumulativeFlowTeamsTeamIdCumulativeFlowGet,
   teamVelocityTeamsTeamIdVelocityGet,
 } from '@/api/generated/endpoints/reports/reports';
-import { listMyTeamsTeamsGet } from '@/api/generated/endpoints/teams/teams';
 import type { TeamRead } from '@/api/generated/models';
 import { setInstanceUrl } from '@/api/instance';
 import { persistToken } from '@/auth/session';
 import { makeScale } from '@/reports/chart';
+import { seededTeam } from '@/api/__tests__/support/team';
 
 /**
  * The four reports against a real instance.
@@ -37,7 +37,7 @@ describeLive('reports against a live instance', () => {
       password: process.env.SOFTTRACK_LIVE_PASSWORD ?? 'password123',
     });
     await persistToken(token.access_token);
-    team = (await listMyTeamsTeamsGet())[0];
+    team = await seededTeam();
   });
 
   it('returns a burndown with an ideal line to draw against', async () => {

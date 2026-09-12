@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 
 import { useListIssuesTeamsTeamIdIssuesGet } from '@/api/generated/endpoints/issues/issues';
 import type { IssueRead } from '@/api/generated/models';
-import { AppText, Field, Loading } from '@/ui/primitives';
+import { AppText, Dot, Field, Loading } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -84,14 +84,7 @@ export function IssuePicker({
               borderRadius: t.radius.control,
             }}
           >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: issue.status.color,
-              }}
-            />
+            <Dot color={issue.status.color} />
             <View style={{ flex: 1 }}>
               <AppText variant="identifier">{issue.identifier}</AppText>
               <AppText variant="body" numberOfLines={1} style={{ fontSize: 14 }}>

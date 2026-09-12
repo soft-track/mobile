@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/ui/icon';
-import { AppText, Button, Field } from '@/ui/primitives';
+import { AppText, Button, Dot, Field } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -52,9 +52,7 @@ export function PropertyRow({
       <AppText variant="label" style={{ width: 92 }}>
         {label}
       </AppText>
-      {color ? (
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
-      ) : null}
+      {color ? <Dot color={color} /> : null}
       <AppText
         variant="body"
         numberOfLines={1}
@@ -97,9 +95,7 @@ function OptionRow({
         backgroundColor: selected ? t.line.navActive : 'transparent',
       }}
     >
-      {color ? (
-        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-      ) : null}
+      {color ? <Dot color={color} size={10} /> : null}
       <View style={{ flex: 1 }}>
         <AppText variant="body" numberOfLines={1}>
           {label}

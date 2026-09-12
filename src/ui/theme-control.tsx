@@ -60,7 +60,9 @@ export function ThemePreferenceControl() {
             key={option.value}
             onPress={() => setPreference(option.value)}
             accessibilityRole="button"
+            accessibilityLabel={option.label}
             accessibilityState={active ? { selected: true } : {}}
+            aria-selected={active}
             style={{
               flex: 1,
               paddingVertical: 8,

@@ -12,7 +12,7 @@ import {
 import { StatusCategory, type StatusRead, type TeamRead } from '@/api/generated/models';
 import { errorDetail } from '@/api/errors';
 import { Icon } from '@/ui/icon';
-import { Alert, AppText, Button, Card, Field } from '@/ui/primitives';
+import { Alert, AppText, Button, Card, Dot, Field } from '@/ui/primitives';
 import { Sheet } from '@/ui/sheet';
 import { useTokens } from '@/ui/theme';
 
@@ -136,9 +136,7 @@ export function StatusesPanel({
             key={status.id}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 }}
           >
-            <View
-              style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: status.color }}
-            />
+            <Dot color={status.color} size={10} />
             <View style={{ flex: 1 }}>
               <AppText variant="body" numberOfLines={1} style={{ fontSize: 14 }}>
                 {status.name}

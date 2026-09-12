@@ -7,5 +7,6 @@ module.exports = {
   resolver: 'react-native-worklets/jest/resolver.js',
   // The generated client is orval's output, not ours -- it is covered by the
   // api-contract check instead.
-  testPathIgnorePatterns: ['/node_modules/', '/src/api/generated/'],
+  // `support/` holds helpers for the live suites, not suites of their own.
+  testPathIgnorePatterns: ['/node_modules/', '/src/api/generated/', '/__tests__/support/'],
 };
