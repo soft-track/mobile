@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "dev.softtrack.mobile",
+      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#eef0f8",
